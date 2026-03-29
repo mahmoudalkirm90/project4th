@@ -5,6 +5,8 @@ Models = [
     Appointment,
     Prescription,   
     Medication,
+    SessionPrice,
+    Payment,
 ]
 
 admin.site.register(Models)

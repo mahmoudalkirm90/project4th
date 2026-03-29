@@ -4,15 +4,41 @@ from users.models import User
 
 class Doctor(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
-    
-    specialization = models.CharField(max_length=100 , blank=True , null=True)
     bio = models.TextField(blank=True , null=True)
     experience = models.IntegerField(blank=True , null=True)
-    rating = models.FloatField(blank=True , null=True)
+    specialization = models.CharField(max_length=100 , blank=True , null=True) # the main specialization of the doctor
+    def __str__(self):
+        return self.user.username
+    
+    @property 
+    def specialization_list(self):
+        return 
 
-class DoctorDomain(models.Model):
-    doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='domains')
-    domain = models.CharField(max_length=100)
+# for the doctor to add more specializations if he has more than one
+class DoctorSpecialties(models.Model):
+    doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='specializations')
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return f"{self.doctor.user.username} - {self.name}"
+    
+class MainSpecialization(models.Model):
+    doctor = models.OneToOneField(Doctor , on_delete=models.CASCADE , related_name='main_specialization')
+    specialization = models.OneToOneField(DoctorSpecialties , on_delete=models.CASCADE , related_name='main_specialization')
+
+    def __str__(self):
+        return self.specialization.name 
+      
+class DoctorEducation(models.Model):
+    doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='educations')
+    degree = models.CharField(max_length=100)
+    institution = models.CharField(max_length=100)
+    graduation_year = models.PositiveIntegerField(blank=True , null=True)
+    license_number = models.CharField(max_length=100 , blank=True , null=True)
+    brief_description = models.TextField(blank=True , null=True)
+
+    def __str__(self):
+        return f"{self.doctor.user.username} - {self.degree}"
 
 # اوقات الدوام للأطباء
 class DoctorSchedule(models.Model):
@@ -29,4 +55,14 @@ class DoctorSchedule(models.Model):
     day_of_week = models.CharField(max_length=20, choices=DAYS_OF_WEEK) # e.g., Monday, Tuesday, etc.
     start_time = models.TimeField()
     end_time = models.TimeField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) # to track when the schedule was last updated
     # يمكن أن يكون هناك أكثر من توقيت في نفس اليوم لنفس الطبيب
+
+class DoctorPaymentMethod(models.Model):
+    doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='payment_methods')
+    method = models.CharField(max_length=100) # e.g., Credit Card, PayPal, etc.
+
+    is_active = models.BooleanField(default=True) # to allow doctors to activate or deactivate payment methods without deleting them
+    details = models.TextField(blank=True , null=True) # to store any additional details related to the payment method (e.g., account number, etc.)

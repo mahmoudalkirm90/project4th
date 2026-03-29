@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'appointments',
     'assessments',
     'notifications',
+    'reports',
+    'ratings',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

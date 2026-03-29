@@ -10,6 +10,13 @@ class Appointment(models.Model):
         Pending = 'pending' , 'Pending' 
         Confirmed = 'confirmed' , 'Confirmed'
         Cancelled = 'cancelled' , 'Cancelled'
+        
+    class Type(models.TextChoices):
+        Video = 'video' , 'Video'
+        Audio = 'audio' , 'Audio'
+        TextMessage = 'text_message' , 'Text Message'
+
+    appointment_type = models.CharField(max_length=100 , choices=Type.choices , default=Type.TextMessage)
     patient = models.ForeignKey(Patient , on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE)
     date = models.DateTimeField()
@@ -18,6 +25,19 @@ class Appointment(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+class SessionPrice(models.Model):
+    Doctor = models.ForeignKey(
+        Doctor,
+        on_delete=models.CASCADE,
+        related_name='session_prices',
+    )
+    class Type(models.TextChoices):
+        Video = 'video' , 'Video'
+        Audio = 'audio' , 'Audio'
+        TextMessage = 'text_message' , 'Text Message'
+    duration = models.IntegerField() # in minutes
+    type = models.CharField(max_length=100 , choices= Type.choices)
+    price = models.DecimalField(max_digits=10 , decimal_places=2)
 # create the perscription then add the medications to it in the same request 
 class Prescription(models.Model):
     patient = models.ForeignKey(Patient , on_delete=models.CASCADE)
@@ -41,3 +61,15 @@ class Medication(models.Model):
 
     def __str__(self):
         return self.name
+
+class Payment(models.Model):
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name='payment'
+        )
+    amount = models.DecimalField(max_digits=10 , decimal_places=2)
+    date = models.DateTimeField(default=timezone.now)
+    method = models.CharField(max_length=100)
+    transaction_id = models.CharField(max_length=100 , blank=True , null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
