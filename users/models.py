@@ -23,6 +23,9 @@ class User(AbstractUser):
     gender = models.CharField(max_length=100 , choices=  Gender.choices , null= True , blank=True)
     status = models.CharField(max_length=100 , choices= Status.choices , default=Status.Active)
     
+    is_verified =   models.BooleanField(default=False) # to check if the user has verified his email or not
+    otp_code = models.CharField(max_length=6 , blank=True , null=True) # to store the OTP code for email verification
+    
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -2,8 +2,14 @@ from django.db import models
 from users.models import User
 # Create your models here.
 
+class job_title(models.Model):
+    title = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.title
 class Doctor(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
+    job_title = models.ForeignKey(job_title, on_delete=models.SET_NULL, null=True, blank=True)
     bio = models.TextField(blank=True , null=True)
     experience = models.IntegerField(blank=True , null=True)
     specialization = models.CharField(max_length=100 , blank=True , null=True) # the main specialization of the doctor
@@ -15,21 +21,14 @@ class Doctor(models.Model):
         return 
 
 # for the doctor to add more specializations if he has more than one
-class DoctorSpecialties(models.Model):
+class Specialties(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='specializations')
     name = models.CharField(max_length=100)
     
     def __str__(self):
         return f"{self.doctor.user.username} - {self.name}"
-    
-class MainSpecialization(models.Model):
-    doctor = models.OneToOneField(Doctor , on_delete=models.CASCADE , related_name='main_specialization')
-    specialization = models.OneToOneField(DoctorSpecialties , on_delete=models.CASCADE , related_name='main_specialization')
 
-    def __str__(self):
-        return self.specialization.name 
-      
-class DoctorEducation(models.Model):
+class Education(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='educations')
     degree = models.CharField(max_length=100)
     institution = models.CharField(max_length=100)
@@ -41,7 +40,7 @@ class DoctorEducation(models.Model):
         return f"{self.doctor.user.username} - {self.degree}"
 
 # اوقات الدوام للأطباء
-class DoctorSchedule(models.Model):
+class Schedule(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='schedules')
     DAYS_OF_WEEK = (
         ('Monday', 'Monday'),
@@ -60,7 +59,7 @@ class DoctorSchedule(models.Model):
     updated_at = models.DateTimeField(auto_now=True) # to track when the schedule was last updated
     # يمكن أن يكون هناك أكثر من توقيت في نفس اليوم لنفس الطبيب
 
-class DoctorPaymentMethod(models.Model):
+class PaymentMethod(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='payment_methods')
     method = models.CharField(max_length=100) # e.g., Credit Card, PayPal, etc.
 

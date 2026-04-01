@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'notifications',
     'reports',
     'ratings',
-    'django_extensions',
 ]
 
 MIDDLEWARE = [
