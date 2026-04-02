@@ -42,3 +42,7 @@ class Otp(models.Model):
     is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=10)) # OTP expires after 10 minutes
+
+    def generate_otp():
+        from random import randint
+        return str(randint(1000, 9999))

@@ -3,16 +3,25 @@ import ssl
 from email.message import EmailMessage
 import socket
 
-def send_email(
-    smtp_server,
-    port,
-    sender_email,
-    sender_password,
-    receiver_email,
-    subject,
-    body,
+def send_email(receiver_email, otp_code):
+
+    smtp_server = "smtp.gmail.com"
+    port = 587
+    sender_email = "afiete2026@gmail.com"
+    sender_password = "nmmsuchwtfunhwhy" # eco password not real for security
+    subject = "Welcome to Afiete"
     is_html=False
-):
+    body = f"""Hello,
+
+I hope you are doing well.
+
+I would like to request a One-Time Password {otp_code} to complete my account verification process.
+Please send the OTP to this email address or provide guidance on how I can receive it.
+
+Thank you for your assistance.
+
+Best regards,
+Afiete Team"""
     try:
         # إنشاء الرسالة
         msg = EmailMessage()
