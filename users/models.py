@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-
+from datetime import timedelta
 # User -> patiant 
 # User -> doctor 
 # User -> Admin
@@ -24,7 +24,7 @@ class User(AbstractUser):
     status = models.CharField(max_length=100 , choices= Status.choices , default=Status.Active)
     
     is_verified =   models.BooleanField(default=False) # to check if the user has verified his email or not
-    otp_code = models.CharField(max_length=6 , blank=True , null=True) # to store the OTP code for email verification
+    # otp_code = models.CharField(max_length=6 , blank=True , null=True) # to store the OTP code for email verification
     
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -35,3 +35,10 @@ class notes(models.Model):
     content = models.TextField(blank=True , null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class Otp(models.Model):
+    user = models.ForeignKey(User , on_delete=models.CASCADE)
+    code = models.CharField(max_length=120)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=10)) # OTP expires after 10 minutes
