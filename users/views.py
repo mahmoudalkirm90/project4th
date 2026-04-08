@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import (UserLoginSerializer,
+from .serializers import ( UserLoginSerializer,
                            ResendOtpSerializer,
                            VerifyOtpSerializer)
 

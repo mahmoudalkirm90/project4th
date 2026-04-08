@@ -11,7 +11,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['username', 'email']
         extra_kwargs = {'password': {'write_only': True}}
 
-
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
@@ -21,7 +20,7 @@ class UserLoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("Patient with this email does not exist.")
             
-        if user.check_password(attrs['password']):
+        if not user.check_password(attrs['password']):
             raise serializers.ValidationError("Incorrect password.")
         if not user.is_verified:
             raise serializers.ValidationError("Account is not verified. Please verify your account before logging in.")
