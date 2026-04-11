@@ -40,20 +40,6 @@ class ResendOtpSerializer(serializers.Serializer):
     def save(self):
         email = self.validated_data['email']
 
-        # البحث عن OTP صالح
-        otp = Otp.objects.filter(
-            user__email=email,
-            is_used=False,
-            expires_at__gt=timezone.now()
-        ).order_by('-created_at').first()
-
-        if otp:
-            send_email(
-                receiver_email=otp.user.email,
-                otp_code=otp.code
-            )
-            return {"message": "OTP resent successfully"}
-
         # إنشاء OTP جديد
         user = User.objects.filter(email=email).first()
 
@@ -66,7 +52,7 @@ class ResendOtpSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"email": "User is already verified"}
             )
-
+        otp = Otp.objects.filter(user=user, is_used=False).update(is_used=True)
         new_otp = Otp.objects.create(
             user=user,
             code=Otp.generate_otp()
