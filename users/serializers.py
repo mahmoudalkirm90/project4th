@@ -5,15 +5,39 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import is_doctor , is_patient
 from .mail_sender import send_email
 from django.utils import timezone
+from django.contrib.auth.hashers import make_password
+import uuid
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ['username', 'email','password']
         extra_kwargs = {'password': {'write_only': True}}
 
-class UserLoginSerializer(serializers.Serializer):
+class UserDoctorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email','password','first_name','last_name']
+        extra_kwargs = {'password': {'write_only': True}}
+
+
+    def create(self, validated_data):
+        first_name = (validated_data.get('first_name') or '').strip()
+        last_name = (validated_data.get('last_name') or '').strip()
+    
+        username = f"{first_name or 'user'}_{last_name or 'doc'}_{str(uuid.uuid4())[:8]}".lower()
+        user = User.objects.create_user(
+            username=username,
+            email=validated_data.get('email'),
+            password=validated_data.get('password'),
+            first_name=first_name,
+            last_name=last_name
+        )
+    
+        return user 
+    
+class UserLoginSerializer(serializers.Serializer):  
     email = serializers.EmailField()
-    password = serializers.CharField()
+    password = serializers.CharField() 
 
     def validate(self, attrs):
         user = User.objects.filter(email=attrs['email']).first()
@@ -52,10 +76,12 @@ class ResendOtpSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"email": "User is already verified"}
             )
-        otp = Otp.objects.filter(user=user, is_used=False).update(is_used=True)
+        Otp.objects.filter(user=user, is_used=False).update(is_used=True)
+        code = Otp.generate_otp()
+        hashed_code = make_password(code)
         new_otp = Otp.objects.create(
             user=user,
-            code=Otp.generate_otp()
+            code= hashed_code
         )
 
         send_email(user.email, new_otp.code)
