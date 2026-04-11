@@ -3,7 +3,7 @@ import ssl
 from email.message import EmailMessage
 import socket
 
-def send_email(receiver_email, otp_code):
+def send_email(receiver_email, otp_code=None , process="verification"):
 
     smtp_server = "smtp.gmail.com"
     port = 587
@@ -11,7 +11,9 @@ def send_email(receiver_email, otp_code):
     sender_password = "nmmsuchwtfunhwhy" # eco password not real for security
     subject = "Welcome to Afiete"
     is_html=False
-    body = f"""Hello,
+    body = ' '
+    if process == "verification":
+        body = f"""Hello,
 
 I hope you are doing well.
 
@@ -22,6 +24,20 @@ Thank you for your assistance.
 
 Best regards,
 Afiete Team"""
+    elif process == "Doctor Accepted":
+        subject = "Afiete - Doctor Accepted"
+        body = f"""
+        Hello Doctor, 
+        We are pleased to inform you that your application to join Afiete has been accepted. 
+        We look forward to having you as part of our community and working together to provide excellent healthcare"""
+    
+    
+    elif process == "Doctor Rejected":
+        subject = "Afiete - Doctor Rejected"
+        body = f""" Hello Doctor,
+        We regret to inform you that your application to join Afiete has been rejected. 
+        We appreciate your interest in our platform and encourage you to apply again in the future.
+        """
     try:
         # إنشاء الرسالة
         msg = EmailMessage()
