@@ -13,6 +13,15 @@ class Doctor(models.Model):
     bio = models.TextField(blank=True , null=True)
     experience = models.IntegerField(blank=True , null=True)
     specialization = models.CharField(max_length=100 , blank=True , null=True) # the main specialization of the doctor
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') # to track the approval status of the doctor
+    
     def __str__(self):
         return self.user.username
     
@@ -35,7 +44,22 @@ class Education(models.Model):
     graduation_year = models.PositiveIntegerField(blank=True , null=True)
     license_number = models.CharField(max_length=100 , blank=True , null=True)
     brief_description = models.TextField(blank=True , null=True)
-
+    
+    certificate = models.FileField(upload_to=f'media/certificates/%Y/%m/%d/', blank=True , null=True) # to allow doctors to upload their certificates or licenses
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') # to track the approval status of the education record
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) # to track when the education record
+   
+    reveiwed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='education_reviews') # to track which admin reviewed the education record
+    reveiwed_at = models.DateTimeField(blank=True , null=True) # to track when the education record was reviewed7
+    reveiwer_comment = models.TextField(blank=True , null=True) # to allow the admin to add comments when reviewing the education record
     def __str__(self):
         return f"{self.doctor.user.username} - {self.degree}"
 
