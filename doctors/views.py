@@ -1,8 +1,11 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .models import Doctor
-from .serializers import DoctorRegisterSerializer
-from rest_framework.response import Response
+from .models import Doctor, Education
+from .serializers import DoctorRegisterSerializer , DoctorProfileSerialzer , DoctorEducationSerializer
+from rest_framework.response import Response 
+from users.permissions import IsDoctor , IsVerified 
+from rest_framework import permissions, viewsets
+
 
 class DoctorRegisterView(generics.CreateAPIView):
     queryset = Doctor.objects.all()
@@ -12,3 +15,23 @@ class DoctorRegisterView(generics.CreateAPIView):
         return Response({"message": "Doctor registered successfully"
                           , "is_verified":False},
                            status=201)
+    
+class DoctorProfileView(generics.UpdateAPIView):
+
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorProfileSerialzer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.doctor
+    
+class DoctorEducationView(viewsets.ModelViewSet):
+    serializer_class = DoctorEducationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Education.objects.filter(
+            doctor = self.request.user.doctor
+        )
+    def perform_create(self, serializer):
+        serializer.save(doctor=self.request.user.doctor)

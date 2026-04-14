@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Doctor , Education , PaymentMethod, Schedule, Specialties, job_title
+from .models import Doctor , Education , PaymentMethod, Schedule, Specialties, Job_title
 from django.utils.html import format_html
 from users.mail_sender import send_email
 # Register your models here.
@@ -9,7 +9,7 @@ Models = [
     Schedule,
     PaymentMethod,
     Specialties,
-    job_title,
+    Job_title,
 ]
 
 admin.site.register(Models)

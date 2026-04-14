@@ -2,14 +2,14 @@ from django.db import models
 from users.models import User
 # Create your models here.
 
-class job_title(models.Model):
+class Job_title(models.Model):
     title = models.CharField(max_length=100)
 
     def __str__(self):
         return self.title
 class Doctor(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
-    job_title = models.ForeignKey(job_title, on_delete=models.SET_NULL, null=True, blank=True)
+    job_title = models.ForeignKey(Job_title, on_delete=models.SET_NULL, null=True, blank=True)
     bio = models.TextField(blank=True , null=True)
     experience = models.IntegerField(blank=True , null=True)
     specialization = models.CharField(max_length=100 , blank=True , null=True) # the main specialization of the doctor
