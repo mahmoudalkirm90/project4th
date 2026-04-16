@@ -15,7 +15,7 @@ class UserLoginView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):   
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=200)
+        return Response(serializer.validated_data, status=200)
 
 # expected json data for request : 
 # {

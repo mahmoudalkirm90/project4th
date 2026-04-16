@@ -84,7 +84,7 @@ class ResendOtpSerializer(serializers.Serializer):
             code= hashed_code
         )
 
-        send_email(user.email, new_otp.code)
+        send_email(user.email, code)
 
         return {"message": "New OTP generated and sent successfully"}
 
