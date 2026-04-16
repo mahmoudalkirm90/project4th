@@ -16,7 +16,7 @@ class Doctor(models.Model):
     
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('approved', 'Approved'),
+        ('approved', 'Approved'), 
         ('rejected', 'Rejected'),
     ]
 

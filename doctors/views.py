@@ -24,6 +24,12 @@ class DoctorProfileView(generics.UpdateAPIView):
 
     def get_object(self):
         return self.request.user.doctor
+        
+    def update(self, request, *args, **kwargs):
+        res =super().update(request, *args, **kwargs)
+        return Response({
+            "data":res.data,
+            "message": "Doctor profile updated successfully"}, status=200)
     
 class DoctorEducationView(viewsets.ModelViewSet):
     serializer_class = DoctorEducationSerializer
@@ -35,3 +41,7 @@ class DoctorEducationView(viewsets.ModelViewSet):
         )
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user.doctor)
+    
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        return Education.objects.get(id=pk, doctor=self.request.user.doctor)

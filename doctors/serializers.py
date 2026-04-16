@@ -32,40 +32,45 @@ class DoctorRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(e)) 
 
 class job_titleSerialzer(serializers.ModelSerializer):
+    title = serializers.CharField(required=False)
     class Meta: 
         model = Job_title
-        fields = "__all__"   
+        fields = ["title",] 
 class UserUpdateSerialzer(serializers.ModelSerializer):
     class Meta: 
         model = User
         fields = ['gender','birth_date','phone']
 
 class DoctorProfileSerialzer(serializers.ModelSerializer):
-    user = UserUpdateSerialzer()
-    job_title = job_titleSerialzer()
+    user = UserUpdateSerialzer(required=False)
+    job_title = job_titleSerialzer(required=False)
     class Meta: 
         model = Doctor
         fields = ['user','job_title','experience','specialization']
     
 
-    def update(self,instance,validated_data):
-        user_data = validated_data.pop('user')
-
+    def update(self,instance,validated_data): 
+        user_data = validated_data.pop('user',None)
         user = instance.user
-        job_title_data = validated_data.pop('job_title')
+        job_title_data = validated_data.pop('job_title',None)
 
-        instance.specialization = validated_data.get('specialization',instance.specialization)
-        instance.experience = validated_data.get('experience', instance.experience) 
-        instance.save()
-
-        job_title_obj = Job_title.objects.get_or_create(job_title_data)
-        user.job_title = job_title_obj
-
-        user.gender = user_data.get('gender',user.gender)
-        user.birth_date = user_data.get('birth_date',user.birth_date)
-        user.phone = user_data.get('phone',user.phone)
-        user.save()
-
+        with transaction.atomic():
+            instance.specialization = validated_data.get('specialization',instance.specialization)
+            instance.experience = validated_data.get('experience', instance.experience) 
+            
+            title = job_title_data.get('title') if job_title_data else None
+            if title:
+                job_title_obj, _ = Job_title.objects.get_or_create(title=title)
+                instance.job_title = job_title_obj  
+            
+            instance.save()
+    
+            if user_data:
+                user.gender = user_data.get('gender',user.gender)
+                user.birth_date = user_data.get('birth_date',user.birth_date)
+                user.phone = user_data.get('phone',user.phone)
+                user.save()
+        
         
 
         return instance
