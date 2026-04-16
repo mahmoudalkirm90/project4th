@@ -15,6 +15,9 @@ class User(AbstractUser):
     class Status (models.TextChoices):
         Active = 'active' , 'Active'
         Deactive = 'deactive' , 'Deactive'
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15 , blank=True , null=True)
