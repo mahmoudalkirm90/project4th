@@ -39,12 +39,14 @@ class notes(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+def otp_expiry():
+    return timezone.now() + timedelta(minutes=10)
 class Otp(models.Model):
     user = models.ForeignKey(User , on_delete=models.CASCADE)
     code = models.CharField(max_length=120)
     is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=10)) # OTP expires after 10 minutes
+    expires_at = models.DateTimeField(default=otp_expiry) # OTP expires after 10 minutes
 
     def generate_otp():
         from random import randint
