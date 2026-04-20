@@ -10,9 +10,22 @@ import uuid
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email','password']
+        fields = ['nickname','email','password']
         extra_kwargs = {'password': {'write_only': True}}
+    
+    nickname = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    def create(self, validated_data):
+            nickname = (validated_data.get('nickname') or 'patient').strip()
 
+            username = f"{nickname}_{str(uuid.uuid4())[:8]}".lower()
+            user = User.objects.create_user(
+                username=username,
+                email=validated_data.get('email'),
+                password=validated_data.get('password'),
+            )
+
+            return user 
+    
 class UserDoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

@@ -11,7 +11,6 @@ from .serializers import ( UserLoginSerializer,
 
 class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
-    # permission_classes = [IsVerified,]
     def post(self, request, *args, **kwargs):   
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -18,14 +18,40 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
         user = UserSerializer()
         class Meta:
             model = Patient
-            fields = ['user', 'psychological_history']
+            fields = ['user']
         def create(self, validated_data):
             otp_code = Otp.generate_otp()
             hashed_otp_code = make_password(otp_code)
             with transaction.atomic():
-                user_data = validated_data.pop('user')
-                user = User.objects.create_user(**user_data)
-                patient = Patient.objects.create(user=user, **validated_data)
+                userserializer = UserSerializer(data=validated_data['user'])
+                userserializer.is_valid(raise_exception=True)
+                user = userserializer.save()
+                patient = Patient.objects.create(user=user,nickname=validated_data['user'].get('nickname', ''))
                 Otp.objects.create(user=user, code=hashed_otp_code)
             send_email(receiver_email=user.email,otp_code=otp_code)
             return patient
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['birth_date','gender', 'phone']
+
+class PatientProfileSerializer(serializers.ModelSerializer):
+    user = UserUpdateSerializer()
+    class Meta:
+        model = Patient
+        fields = ['user','psychological_history',]
+    
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+
+        user = instance.user
+        user.birth_date = user_data.get('birth_date', instance.user.birth_date)
+        user.gender = user_data.get('gender', instance.user.gender)
+        user.phone = user_data.get('phone', instance.user.phone)    
+        user.save()
+
+        instance.psychological_history = validated_data.get('psychological_history', instance.psychological_history)
+        instance.save()
+
+        return instance
+
