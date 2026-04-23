@@ -38,6 +38,14 @@ Afiete Team"""
         We regret to inform you that your application to join Afiete has been rejected. 
         We appreciate your interest in our platform and encourage you to apply again in the future.
         """
+    elif process == "Email Reset":
+        subject = "Afiete - Email Reset"
+        body = f""" Hello,
+        You have been reset email,
+        wa want to check,
+        your one time password otp:{otp_code}
+        Afiete Team
+        """
     try:
         # إنشاء الرسالة
         msg = EmailMessage()

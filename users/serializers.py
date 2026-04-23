@@ -5,7 +5,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import is_doctor , is_patient
 from .mail_sender import send_email
 from django.utils import timezone
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password , check_password
+from django.db import transaction
 import uuid
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,10 +102,6 @@ class ResendOtpSerializer(serializers.Serializer):
 
         return {"message": "New OTP generated and sent successfully"}
 
-from rest_framework import serializers
-from django.utils import timezone
-from django.contrib.auth.hashers import check_password
-from rest_framework_simplejwt.tokens import RefreshToken
 
 class VerifyOtpSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -140,3 +137,76 @@ class VerifyOtpSerializer(serializers.Serializer):
         raise serializers.ValidationError({
             "detail": "Invalid OTP or email"
         })
+
+class DeleteAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["password"]
+    def validate_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect password.")
+        return value
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.is_active = False
+        user.save()
+        return user 
+    
+class PasswordResetSerializer(serializers.ModelSerializer):
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+    class Meta:
+        model = User
+        fields = ['password', "new_password" , "confirm_password"]
+    def validate_password(self,value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect password")
+        if self.initial_data['new_password'] != self.initial_data['confirm_password']:
+            raise serializers.ValidationError("New password and confirm password do not match")
+        return value
+    
+    def update(self,instance,validated_data):
+        user = instance
+        new_password = validated_data['new_password']
+        user.set_password(new_password)
+        user.save()
+        return user
+class EmailResetSerializer(serializers.ModelSerializer):
+    refresh = serializers.CharField(write_only=True)
+    new_email = serializers.EmailField(write_only=True)
+    class Meta:
+        model = User
+        fields = ['new_email','password','refresh']
+        extra_kwargs = {'password': {'write_only': True}}
+    def validate_password(self,value):
+        user = self.context['request'].user 
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect password")
+        return value
+    def update(self,instance,validated_data):
+        user = instance
+        email = validated_data['new_email']
+        refresh = validated_data['refresh']
+        token = RefreshToken(refresh)
+
+        with transaction.atomic():
+
+            # log out user from all devices by blacklisting the refresh token
+            token.blacklist()
+            
+            # update email and set is_verified to false
+            user.email = email
+            user.is_verified = False # بعد تغيير الايميل يجب اعادة التحقق منه
+            user.save()
+
+            # send otp
+            code = Otp.generate_otp()
+            hashed_code = make_password(code)
+            new_otp = Otp.objects.create(
+                user=user,
+                code= hashed_code
+            )
+        send_email(user.email, code)
+        return user
