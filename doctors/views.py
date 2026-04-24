@@ -31,17 +31,22 @@ class DoctorProfileView(generics.UpdateAPIView):
             "data":res.data,
             "message": "Doctor profile updated successfully"}, status=200)
     
-class DoctorEducationView(viewsets.ModelViewSet):
+class DoctorEducationView(generics.CreateAPIView):
     serializer_class = DoctorEducationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsDoctor]
 
     def get_queryset(self):
         return Education.objects.filter(
             doctor = self.request.user.doctor
         )
-    def perform_create(self, serializer):
+    def create(self, serializer):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
         serializer.save(doctor=self.request.user.doctor)
-    
+        return Response({
+            "message": "Doctor education added successfully"
+        }, status=201)
+
     def get_object(self):
         pk = self.kwargs.get('pk')
         return Education.objects.get(id=pk, doctor=self.request.user.doctor)

@@ -20,10 +20,7 @@ def approve_certificates(modeladmin, request, queryset):
     for obj in queryset:
         obj.status = 'approved'
         obj.save()
-    send_email(
-        receiver_email=obj.doctor.user.email,
-        process="Doctor Accepted"
-    )
+    Thread(target=send_email, args=(obj.doctor.user.email, "Doctor Accepted")).start()
 
 @admin.action(description="Reject selected certificates")
 def reject_certificates(modeladmin, request, queryset):
