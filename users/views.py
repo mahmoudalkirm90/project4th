@@ -35,6 +35,7 @@ class VerifyOtpView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
+        refresh = RefreshToken.for_user(self.request.user)
         return Response(result, status=200)
 
 class LogoutView(APIView):

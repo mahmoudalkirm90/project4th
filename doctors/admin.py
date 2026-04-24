@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Doctor , Education , PaymentMethod, Schedule, Specialties, Job_title
 from django.utils.html import format_html
 from users.mail_sender import send_email
+from threading import Thread
 # Register your models here.
 
 Models = [
@@ -29,10 +30,8 @@ def reject_certificates(modeladmin, request, queryset):
     for obj in queryset:
         obj.status = 'rejected'
         obj.save()
-    send_email(
-        receiver_email=obj.doctor.user.email,
-        process="Doctor Rejected"
-    )
+    
+    Thread(target=send_email, args=(obj.doctor.user.email, "Doctor Rejected")).start()
     
 @admin.register(Education)
 class EducationAdmin(admin.ModelAdmin): 

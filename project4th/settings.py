@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-2my-8j*rn&56tip%fgz9ft9b1!zv4t9nfh$5u4e8=&3oe2mk5p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -155,3 +155,14 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'your@gmail.com'
+EMAIL_HOST_PASSWORD = 'your_app_password'
+
+DEFAULT_FROM_EMAIL = 'your@gmail.com'

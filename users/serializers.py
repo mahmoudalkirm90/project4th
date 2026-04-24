@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.contrib.auth.hashers import make_password , check_password
 from django.db import transaction
 import uuid
+import threading
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -98,7 +99,7 @@ class ResendOtpSerializer(serializers.Serializer):
             code= hashed_code
         )
 
-        send_email(user.email, code)
+        threading.Thread(target=send_email, args=(user.email, code)).start()
 
         return {"message": "New OTP generated and sent successfully"}
 
@@ -208,5 +209,5 @@ class EmailResetSerializer(serializers.ModelSerializer):
                 user=user,
                 code= hashed_code
             )
-        send_email(user.email, code)
+        threading.Thread(target=send_email, args=(user.email, code)).start()
         return user

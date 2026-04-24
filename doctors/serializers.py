@@ -4,6 +4,7 @@ from users.models import User , Otp
 from users.serializers import UserDoctorSerializer
 from django.db import transaction 
 from users.mail_sender import send_email
+from threading import Thread
 from django.contrib.auth.hashers import make_password
 class DoctorRegisterSerializer(serializers.ModelSerializer):
     user = UserDoctorSerializer()
@@ -13,23 +14,18 @@ class DoctorRegisterSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         user_data = validated_data.pop('user')
-        try:
-            with transaction.atomic():
-                user_serializer = UserDoctorSerializer(data=user_data)
-                user_serializer.is_valid(raise_exception=True)
-                user = user_serializer.save()
-                doctor = Doctor.objects.create(user=user, **validated_data)
-                code = Otp.generate_otp()
-                hash_code = make_password(code)
-                Otp.objects.create(user=user, code=hash_code)    
-                transaction.on_commit(lambda: send_email(
-                    receiver_email=user.email,
-                    otp_code=code,
-                ))
-            
-            return doctor
-        except Exception as e:
-            raise serializers.ValidationError(str(e)) 
+        
+        with transaction.atomic():
+            user_serializer = UserDoctorSerializer(data=user_data)
+            user_serializer.is_valid(raise_exception=True)
+            user = user_serializer.save()
+            doctor = Doctor.objects.create(user=user, **validated_data)
+            code = Otp.generate_otp()
+            hash_code = make_password(code)
+            Otp.objects.create(user=user, code=hash_code)    
+        Thread(target=send_email, args=(user.email, code)).start()
+        
+        return doctor
 
 class job_titleSerialzer(serializers.ModelSerializer):
     title = serializers.CharField(required=False)

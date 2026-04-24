@@ -8,7 +8,7 @@ from users.mail_sender import send_email
 from users.serializers import UserSerializer
 from django.contrib.auth.hashers import make_password
 from users.serializers import UserSerializer
-
+from threading import Thread
 class OtpSerializer(serializers.ModelSerializer):
     class Meta:
         model = Otp
@@ -28,7 +28,7 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
                 user = userserializer.save()
                 patient = Patient.objects.create(user=user,nickname=validated_data['user'].get('nickname', ''))
                 Otp.objects.create(user=user, code=hashed_otp_code)
-            send_email(receiver_email=user.email,otp_code=otp_code)
+            Thread(target=send_email, args=(user.email, otp_code)).start()
             return patient
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
