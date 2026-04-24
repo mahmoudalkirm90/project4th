@@ -55,3 +55,11 @@ class PatientProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+class GoogleAuthSerializer(serializers.Serializer):
+    id_token = serializers.CharField() 
+    def validate(self, attrs):
+        id_token = attrs.get("id_token","")
+        if not id_token:
+            raise serializers.ValidationError("ID token is required")
+
+        return attrs

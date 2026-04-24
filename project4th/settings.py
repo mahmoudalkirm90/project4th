@@ -137,6 +137,8 @@ MEDIA_ROOT = path.join( BASE_DIR, 'media' )
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
  
+GOOGLE_CLIENT_ID = "1003547921607-12juc731vap30cbmmfjtkf38tr09ck8b.apps.googleusercontent.com"
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
