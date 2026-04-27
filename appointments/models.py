@@ -26,7 +26,7 @@ class Appointment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 class SessionPrice(models.Model):
-    Doctor = models.ForeignKey(
+    doctor = models.ForeignKey(
         Doctor,
         on_delete=models.CASCADE,
         related_name='session_prices',

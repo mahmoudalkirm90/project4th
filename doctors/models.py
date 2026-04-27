@@ -82,7 +82,9 @@ class Schedule(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) # to track when the schedule was last updated
     # يمكن أن يكون هناك أكثر من توقيت في نفس اليوم لنفس الطبيب
-
+    
+    def __str__(self):
+        return f"{self.doctor.user.username} - {self.day_of_week} ({self.start_time} - {self.end_time})"
 class PaymentMethod(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='payment_methods')
     method = models.CharField(max_length=100) # e.g., Credit Card, PayPal, etc.
