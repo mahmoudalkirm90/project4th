@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (Doctor,
                      Job_title,
                      Education,
-                     Schedule)
+                     Schedule,
+                     SubSpecialization)
 from users.models import User , Otp
 from users.serializers import UserDoctorSerializer
 from django.db import transaction 
@@ -41,22 +42,27 @@ class UserUpdateSerialzer(serializers.ModelSerializer):
     class Meta: 
         model = User
         fields = ['gender','birth_date','phone']
-
+class SubSpecializationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubSpecialization
+        fields = "__all__"
+        
 class DoctorProfileSerialzer(serializers.ModelSerializer):
     user = UserUpdateSerialzer(required=False)
     job_title = job_titleSerialzer(required=False)
+    specialties = SubSpecializationSerializer(required=False,many=True)
     class Meta: 
         model = Doctor
-        fields = ['user','job_title','experience','specialization']
+        fields = ['user','job_title','specialties','experience']
     
 
     def update(self,instance,validated_data): 
         user_data = validated_data.pop('user',None)
         user = instance.user
         job_title_data = validated_data.pop('job_title',None)
+        specialties_data = validated_data.pop('specialties',None)
 
         with transaction.atomic():
-            instance.specialization = validated_data.get('specialization',instance.specialization)
             instance.experience = validated_data.get('experience', instance.experience) 
             
             title = job_title_data.get('title') if job_title_data else None
@@ -65,13 +71,19 @@ class DoctorProfileSerialzer(serializers.ModelSerializer):
                 instance.job_title = job_title_obj  
             
             instance.save()
-    
+
             if user_data:
                 user.gender = user_data.get('gender',user.gender)
                 user.birth_date = user_data.get('birth_date',user.birth_date)
                 user.phone = user_data.get('phone',user.phone)
                 user.save()
-        
+            if specialties_data:
+                subs = []
+                for obj in specialties_data:
+                    sub, _ = SubSpecialization.objects.get_or_create(name=obj.get('name'))
+                    subs.append(sub)
+                
+                instance.specialties.set(subs)
         
 
         return instance

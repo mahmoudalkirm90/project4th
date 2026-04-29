@@ -7,14 +7,21 @@ class Job_title(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class SubSpecialization(models.Model):
+    name = models.CharField(max_length=100 , blank=True , null=True)
+    def __str__(self):
+        return str(self.name) 
+    
+    
 class Doctor(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
     job_title = models.ForeignKey(Job_title, on_delete=models.SET_NULL, null=True, blank=True)
     bio = models.TextField(blank=True , null=True)
     experience = models.IntegerField(blank=True , null=True)
-    specialization = models.CharField(max_length=100 , blank=True , null=True) # the main specialization of the doctor
     
-    STATUS_CHOICES = [
+    STATUS_CHOICES = [ 
         ('pending', 'Pending'),
         ('approved', 'Approved'), 
         ('rejected', 'Rejected'),
@@ -22,20 +29,13 @@ class Doctor(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') # to track the approval status of the doctor
     
+    specialties = models.ManyToManyField(SubSpecialization)
     def __str__(self):
         return self.user.username
     
     @property 
     def specialization_list(self):
         return 
-
-# for the doctor to add more specializations if he has more than one
-class Specialties(models.Model):
-    doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='specializations')
-    name = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return f"{self.doctor.user.username} - {self.name}"
 
 class Education(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='educations')

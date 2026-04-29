@@ -19,7 +19,7 @@ class DoctorRegisterView(generics.CreateAPIView):
                           , "is_verified":False},
                            status=201)
     
-class DoctorProfileView(generics.UpdateAPIView):
+class DoctorProfileView(generics.RetrieveUpdateAPIView):
 
     queryset = Doctor.objects.all()
     serializer_class = DoctorProfileSerialzer
