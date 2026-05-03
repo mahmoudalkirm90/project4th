@@ -53,7 +53,7 @@ class UserDoctorSerializer(serializers.ModelSerializer):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'username']
+        fields = ['email', 'username', 'birth_date']
 class UserLoginSerializer(serializers.Serializer):  
     email = serializers.EmailField()
     password = serializers.CharField() 
@@ -135,10 +135,8 @@ class VerifyOtpSerializer(serializers.Serializer):
             "detail": "Invalid OTP or email"
         })
 
-class DeleteAccountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["password"]
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField()
     def validate_password(self, value):
         user = self.context['request'].user
         if not user.check_password(value):

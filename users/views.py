@@ -27,11 +27,14 @@ from .utils import *
 class LoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     def post(self, request, *args, **kwargs):
-        user = self.request.user
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
+        user = User.objects.filter(email = serializer.data.get('email')).first()
         user_data = UserInfoSerializer(user).data
+    
+
         refresh = RefreshToken.for_user(user)
         
         role = "doctor" if is_doctor(user) else "patient" if is_patient(user) else "Anonymous"

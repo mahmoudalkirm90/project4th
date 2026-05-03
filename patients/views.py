@@ -23,7 +23,7 @@ class PatientRegisterView(generics.CreateAPIView):
                           , "is_verified":False},
                            status=201)
 
-class PatientProfileView(generics.UpdateAPIView):
+class PatientProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = PatientProfileSerializer
     queryset = Patient.objects.all()
     permission_classes = [permissions.IsAuthenticated, IsPatient]  # Add appropriate permissions here 
