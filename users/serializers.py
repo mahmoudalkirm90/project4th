@@ -53,23 +53,24 @@ class UserDoctorSerializer(serializers.ModelSerializer):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'username', 'birth_date']
+        fields = ['email', 'username', 'age']
 class UserLoginSerializer(serializers.Serializer):  
     email = serializers.EmailField()
     password = serializers.CharField() 
 
     def validate(self, attrs):
-        user = User.objects.filter(email=attrs['email']).first()
-        if not user:
-            raise serializers.ValidationError("Patient with this email does not exist.")
-            
+        users = User.objects.filter(email=attrs['email'])
+        if not users:
+            raise serializers.ValidationError("User with this email does not exist.")
+        user = users.first()    
         if not user.check_password(attrs['password']):
             raise serializers.ValidationError("Incorrect password.") 
         if not user.is_verified:
-            return ({
+            raise serializers.ValidationError({
                       "message":"Account is not verified. Please verify your account before logging in.",
                       "is_verified": False,
                       })
+        attrs['user'] = user
         return attrs
 
 class ResendOtpSerializer(serializers.Serializer):

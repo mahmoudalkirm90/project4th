@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 # User -> patiant 
 # User -> doctor 
 # User -> Admin
@@ -32,6 +32,13 @@ class User(AbstractUser):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def age(self):
+        today = date.today()
+        if self.birth_date: 
+            return today.year - self.birth_date.year - ((today.month, today.day) < 
+                                                        (self.birth_date.month, self.birth_date.day) )
+        return None
 class notes(models.Model):
     Author = models.ForeignKey(User , on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
