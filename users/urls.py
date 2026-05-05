@@ -10,7 +10,7 @@ urlpatterns = [
    path('email/reset',EmailResetView.as_view(),name='email-reset'),
    path('password/reset',PasswordResetView.as_view(),name='password-reset'),
    path('auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
-   path('auth/verify-otp/', VerifyOtpView.as_view(), name='verify-otp'),
+   path('auth/verify-otp/', ForgetPasswordVerifyOtpView.as_view(), name='verify-otp'),
    path('auth/reset-password/', ResetPasswordView.as_view(), name='reset-password')
 ]
 

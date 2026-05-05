@@ -147,7 +147,7 @@ class ForgotPasswordView(generics.GenericAPIView):
         )
 
 
-class VerifyOtpView(generics.GenericAPIView):
+class ForgetPasswordVerifyOtpView(generics.GenericAPIView):
     serializer_class = ForgetPasswordVerifyOtpSerializer
     permission_classes = [AllowAny]
 
