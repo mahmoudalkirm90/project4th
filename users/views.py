@@ -67,7 +67,9 @@ class VerifyOtpView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
-        refresh = RefreshToken.for_user(self.request.user)
+
+        user = User.objects.filter(email=serializer.validated_data.get('email')).first()
+        refresh = RefreshToken.for_user(user)
 
         return Response(
              {      "is_verified":True,

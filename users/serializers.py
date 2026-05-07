@@ -108,7 +108,6 @@ class ResendOtpSerializer(serializers.Serializer):
 class VerifyOtpSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField()
-
     def create(self, validated_data):
         email = validated_data['email']
         code = validated_data['code']
@@ -127,10 +126,10 @@ class VerifyOtpSerializer(serializers.Serializer):
                 user = otp.user
                 user.is_verified = True
                 user.save()
-
+ 
                 
 
-                return self.validated_data
+                return validated_data
 
         raise serializers.ValidationError({
             "detail": "Invalid OTP or email"
