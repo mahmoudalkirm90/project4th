@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from assessments.models import QuestionGroup
 # Create your models here.
 
 class Job_title(models.Model):
@@ -10,10 +11,17 @@ class Job_title(models.Model):
 
 
 class SubSpecialization(models.Model):
-    name = models.CharField(max_length=100 , blank=True , null=True)
+    name           = models.CharField(max_length=255, default='')  # ← مو blank/null
+    question_group = models.ForeignKey(
+        QuestionGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subspecializations'
+        , default=None
+    )
     def __str__(self):
-        return str(self.name) 
-    
+        return self.name
     
 class Doctor(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
