@@ -168,3 +168,13 @@ EMAIL_HOST_USER = 'your@gmail.com'
 EMAIL_HOST_PASSWORD = 'your_app_password'
 
 DEFAULT_FROM_EMAIL = 'your@gmail.com'
+
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'delete-unverified-users': {
+        'task': 'users.tasks.delete_unverified_users',
+        'schedule': crontab(hour=3, minute=0),  # كل يوم 3 الصبح
+    },
+}
