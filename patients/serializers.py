@@ -33,14 +33,16 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['birth_date','gender', 'phone']
-
+        fields = ['email','username','birth_date','gender', 'phone', 'age']
+        extra_kwargs = {'email': {'read_only': True},
+                        'username': {'read_only': True}}
+        
 class PatientProfileSerializer(serializers.ModelSerializer):
     user = UserUpdateSerializer()
     class Meta:
         model = Patient
-        fields = ['user','psychological_history',]
-    
+        fields = ['user','psychological_history','nickname']
+        
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
 

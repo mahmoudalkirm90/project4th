@@ -6,6 +6,8 @@ from .models import (Doctor,
                      SubSpecialization)
 from users.models import User , Otp
 from users.serializers import UserDoctorSerializer
+from appointments.serializers import PricesSerializer
+
 from django.db import transaction 
 from users.mail_sender import send_email
 from threading import Thread
@@ -41,19 +43,20 @@ class job_titleSerialzer(serializers.ModelSerializer):
 class UserUpdateSerialzer(serializers.ModelSerializer):
     class Meta: 
         model = User
-        fields = ['gender','birth_date','phone']
+        fields = ["email" , "username" , 'gender','birth_date','phone','first_name',"last_name","age"]
 class SubSpecializationSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubSpecialization
-        fields = "__all__"
+        fields = ["name"]
         
 class DoctorProfileSerialzer(serializers.ModelSerializer):
     user = UserUpdateSerialzer(required=False)
     job_title = job_titleSerialzer(required=False)
     specialties = SubSpecializationSerializer(required=False,many=True)
+    session_prices = PricesSerializer(required=False, many=True)
     class Meta: 
-        model = Doctor
-        fields = ['user','job_title','specialties','experience']
+        model = Doctor 
+        fields = ['user','job_title','specialties','experience', "bio", 'session_prices']
     
 
     def update(self,instance,validated_data): 

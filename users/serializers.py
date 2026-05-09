@@ -135,8 +135,12 @@ class VerifyOtpSerializer(serializers.Serializer):
             "detail": "Invalid OTP or email"
         })
 
-class DeleteAccountSerializer(serializers.Serializer):
-    password = serializers.CharField()
+class DeleteAccountSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = User
+        fields = ["password"]
+        extra_kwargs = {'password': {'write_only': True}}
+
     def validate_password(self, value):
         user = self.context['request'].user
         if not user.check_password(value):
