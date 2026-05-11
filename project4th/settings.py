@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'notifications',
     'reports',
     'ratings',
+    'articles',
     'rest_framework',
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',

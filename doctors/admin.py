@@ -61,7 +61,7 @@ class DoctorAdmin(admin.ModelAdmin):
         colors = {
             'available': 'green',
             'sold': 'red',
-            'reserved': 'orange'
+            'reserved': 'orange'    
         }
         return format_html(
             '<span style="color: {};">{}</span>',

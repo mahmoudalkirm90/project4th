@@ -43,7 +43,11 @@ class Doctor(models.Model):
     
     @property 
     def specialization_list(self):
-        return 
+        specs = self.specialties.all()
+        objs = []
+        for spec in specs: 
+            objs.append(spec.name)
+        return objs
 
 class Education(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='educations')

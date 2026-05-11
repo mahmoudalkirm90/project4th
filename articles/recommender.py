@@ -1,12 +1,13 @@
 # doctors/recommender.py
 
 from django.db.models import Max, Sum
-from doctors.models import Doctor
-from .models import UserAnswer, AnswerOption
-from doctors.models import Doctor
+from assessments.models import UserAnswer, AnswerOption
+from .models import Article
+
+from django.db.models import Count, Q
 # doctors/recommender.py
 
-def recommend_doctors(patient, top_n: int = 5) -> list:
+def recommend_articles(patient, top_n: int = 5) -> list:    
 
     # 1. احسب السكورات per QuestionGroup
     answers = (
@@ -48,27 +49,25 @@ def recommend_doctors(patient, top_n: int = 5) -> list:
     seen = {}
 
     for group_id, info in ranked:
-        doctors = (
-            Doctor.objects
-            .filter(
-                status='approved',
-                specialties__question_group_id=group_id,  # ← FK مباشر
+        articles = (
+            Article.objects.with_reactions().filter(
+                status = "Approved",
+                specialization__question_group_id=group_id
             )
-            .select_related('user', 'job_title')
-            .prefetch_related('specialties')
-            .distinct()
         )
-
-        for doctor in doctors:
-            if doctor.id not in seen:
-                seen[doctor.id] = {
-                    "username":       doctor.user.username,
-                    "name":           doctor.user.get_full_name(),
-                    "job_title":      doctor.job_title.title if doctor.job_title else None,
-                    "experience":     doctor.experience,
-                    "primary_domain": info["name"],
+        for article in articles: 
+            if article.id not in seen: 
+                seen[article.id] = {
+                    "id":             article.id,
+                    "author":         article.author.user.username,
+                    "title":          article.title,
+                    "content":        article.content,
+                    "created_at":     article.created_at,
+                    "specialization": article.specialization.name,
                     "primary_score":  info["score"],
-                    "specialties":    [s.name for s in doctor.specialties.all()],
-                }
+                    "likes":          article.likes,
+                    "dislikes":       article.dislikes,
+                    "score":          article.score
 
-    return sorted(seen.values(), key=lambda x: x["primary_score"], reverse=True)[:top_n]
+                }
+        return seen
