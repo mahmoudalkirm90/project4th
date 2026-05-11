@@ -12,7 +12,7 @@ from .serializers import (ArticaleCraeteSerializer,
                           ArticleRetrieveSerializer,
                           ArticlesMostReactionScoreSerializer, 
                           ReactionSerializer,
-                          DelerteArticleSerializer,
+                          DeleteArticleSerializer,
                           ArticleSerializer,
 
                           )
@@ -138,7 +138,7 @@ class ReactionGenericAPIView(generics.GenericAPIView):
         return Response({"message": f"{reaction_type} added"})
         
 class DeleteArticleGenericAPIView(generics.GenericAPIView): 
-    serializer_class = DelerteArticleSerializer
+    serializer_class = DeleteArticleSerializer
     permission_classes = [permissions.IsAuthenticated, IsDoctor]
     def get_queryset(self):
         return Article.objects.filter(

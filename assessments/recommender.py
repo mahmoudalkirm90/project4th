@@ -56,7 +56,7 @@ def recommend_doctors(patient, top_n: int = 5) -> list:
             )
             .select_related('user', 'job_title')
             .prefetch_related('specialties')
-            .distinct()
+            .distinct().order_by('-experience')
         )
 
         for doctor in doctors:

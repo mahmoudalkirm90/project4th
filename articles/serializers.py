@@ -64,7 +64,7 @@ class ReactionSerializer(serializers.ModelSerializer):
         model = Reaction
         fields = ["reaction"]
 
-class DelerteArticleSerializer(serializers.ModelSerializer): 
+class DeleteArticleSerializer(serializers.ModelSerializer): 
     class Meta: 
         model = Article
         fields = []
@@ -74,6 +74,8 @@ class ArticleSerializer(serializers.ModelSerializer):
     dislikes = serializers.IntegerField(read_only=True)
     score = serializers.IntegerField(read_only=True)
     author = AuthorSerializer()
+    specialization = SpecializationSerializer(read_only=True)
+
     class Meta:     
         model = Article
         fields = "__all__"
