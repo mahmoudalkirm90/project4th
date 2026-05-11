@@ -6,6 +6,8 @@ from rest_framework.pagination import PageNumberPagination
 
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from django.db.models import Case, When, IntegerField
+
 from users.permissions import IsDoctor, IsPatient
 
 from .serializers import (ArticaleCraeteSerializer,
@@ -18,6 +20,8 @@ from .serializers import (ArticaleCraeteSerializer,
                           )
 from .models import Article, Reaction
 from .recommender import recommend_articles
+from .pagination import ArticlePagination
+
 from users.models import User
 
 class ArticleCreateAPIView(generics.CreateAPIView):
@@ -73,26 +77,41 @@ class ArticleListAPIView(generics.ListAPIView):
         # منرجع كل المقالات لصاحبها
         return objs.filter(author=user.doctor).order_by('-likes','-score',)
         
-class RecommededArticlesAPIView(generics.ListAPIView): 
-    pagination_class = PageNumberPagination
-    pagination_class.page_size = 5
-    serializer_class = ArticleSerializer
+class RecommendedArticlesAPIView(generics.ListAPIView):
+    pagination_class   = ArticlePagination
+    serializer_class   = ArticleSerializer
     permission_classes = [permissions.IsAuthenticated, IsPatient]
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
     def get_queryset(self):
-        patient = self.request.user.patient
+        patient     = self.request.user.patient
         recommended = recommend_articles(patient=patient)
 
-        recommended_ids = list(recommended.keys())  # ['8', '9', ...]
+        recommended_ids = list(recommended.keys())
 
-        return Article.objects.filter(id__in=recommended_ids).annotate(
-            likes=Count('reactions', filter=Q(reactions__reaction='like')),
-            dislikes=Count('reactions', filter=Q(reactions__reaction='dislike')),
-            score=Count('reactions', filter=Q(reactions__reaction='like')) - 
-                  Count('reactions', filter=Q(reactions__reaction='dislike'))
-        ).filter(status="Approved").order_by('-likes', '-score')
+        # حافظ على ترتيب الـ recommended بـ CASE WHEN
+        order = Case(
+            *[
+                When(id=article_id, then=pos)
+                for pos, article_id in enumerate(recommended_ids)
+            ],
+            output_field=IntegerField()
+        )
+
+        return (
+            Article.objects
+            .filter(id__in=recommended_ids, status='Approved')
+            .annotate(
+                likes    = Count('reactions', filter=Q(reactions__reaction='like')),
+                dislikes = Count('reactions', filter=Q(reactions__reaction='dislike')),
+                score    = (
+                    Count('reactions', filter=Q(reactions__reaction='like')) -
+                    Count('reactions', filter=Q(reactions__reaction='dislike'))
+                ),
+                relevance_order = order,
+            )
+            .order_by('relevance_order', '-score')  # ترتيب الـ recommendation أولاً، score كـ tiebreaker
+        )
+
 class ArticlesMostReactionScoreListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ArticlesMostReactionScoreSerializer
