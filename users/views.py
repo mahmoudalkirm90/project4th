@@ -20,6 +20,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.hashers import make_password
+from django.shortcuts import get_object_or_404
 import threading
 
 
@@ -62,13 +63,18 @@ class ResendOtpView(generics.GenericAPIView):
 
 class VerifyOtpView(generics.GenericAPIView):
     serializer_class = VerifyOtpSerializer
-
+    
     def post(self, request, *args, **kwargs):
+        get_object_or_404(User, email=request.data.get('email'))
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
-
-        user = User.objects.filter(email=serializer.validated_data.get('email')).first()
+        if not result.get('user'): 
+            return Response(
+                {"message": "invalid otp"},
+                400
+            )
         refresh = RefreshToken.for_user(user)
 
         return Response(

@@ -129,11 +129,9 @@ class VerifyOtpSerializer(serializers.Serializer):
  
                 
 
-                return validated_data
+                return user
 
-        raise serializers.ValidationError({
-            "detail": "Invalid OTP or email"
-        })
+        return validated_data
 
 class DeleteAccountSerializer(serializers.ModelSerializer):
     class Meta: 
