@@ -70,11 +70,12 @@ class VerifyOtpView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
-        if not result.get('user'): 
+        if not result: 
             return Response(
                 {"message": "invalid otp"},
                 400
             )
+        user = result
         refresh = RefreshToken.for_user(user)
 
         return Response(

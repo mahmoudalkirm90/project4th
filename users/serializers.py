@@ -131,7 +131,7 @@ class VerifyOtpSerializer(serializers.Serializer):
 
                 return user
 
-        return validated_data
+        return False
 
 class DeleteAccountSerializer(serializers.ModelSerializer):
     class Meta: 
