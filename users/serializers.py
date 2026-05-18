@@ -10,12 +10,20 @@ from django.db import transaction
 import uuid
 import threading
 class UserSerializer(serializers.ModelSerializer):
+    nickname = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    email = serializers.EmailField(validators=[])
     class Meta:
         model = User
         fields = ['nickname','email','password']
         extra_kwargs = {'password': {'write_only': True}}
+     
     
-    nickname = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    def validate_email(self, value):
+        user = User.objects.filter(email=value).first()
+        if user: 
+            raise serializers.ValidationError({"message":"A user with this email already exists.",
+                                               "is_active":user.is_active})
+        return value
     def create(self, validated_data):
             nickname = (validated_data.get('nickname') or 'patient').strip()
 
@@ -29,12 +37,19 @@ class UserSerializer(serializers.ModelSerializer):
             return user 
     
 class UserDoctorSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(validators=[])
+
     class Meta:
         model = User
         fields = ['email','password','first_name','last_name']
         extra_kwargs = {'password': {'write_only': True}}
 
-
+    def validate_email(self, value):
+        user = User.objects.filter(email=value).first()
+        if user: 
+            raise serializers.ValidationError({"message":"A user with this email already exists.",
+                                               "is_active":user.is_active})
+        return value
     def create(self, validated_data):
         first_name = (validated_data.get('first_name') or '').strip()
         last_name = (validated_data.get('last_name') or '').strip()
@@ -64,7 +79,10 @@ class UserLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("User with this email does not exist.")
         user = users.first()    
         if not user.check_password(attrs['password']):
-            raise serializers.ValidationError("Incorrect password.") 
+            raise serializers.ValidationError("Incorrect password.")
+        if not user.is_active: 
+            raise serializers.ValidationError({"message":"This account has been deactivated.",
+                                              "is_active": False})
         if not user.is_verified:
             raise serializers.ValidationError({
                       "message":"Account is not verified. Please verify your account before logging in.",
@@ -125,6 +143,8 @@ class VerifyOtpSerializer(serializers.Serializer):
 
                 user = otp.user
                 user.is_verified = True
+                if not user.is_active: 
+                    user.is_active = True
                 user.save()
  
                 
@@ -133,23 +153,6 @@ class VerifyOtpSerializer(serializers.Serializer):
 
         return False
 
-class DeleteAccountSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = User
-        fields = ["password"]
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def validate_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise serializers.ValidationError("Incorrect password.")
-        return value
-    def save(self, **kwargs):
-        user = self.context['request'].user
-        user.is_active = False
-        user.delete()
-        return user 
-    
 class PasswordResetSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
@@ -275,3 +278,42 @@ class ResetPasswordSerializer(serializers.Serializer):
         user.can_reset_password = False
         user.save()
         return user
+
+class DeactivateUserSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def validate_password(self,value): 
+        user = self.context['request'].user
+        if not user.check_password(value): 
+            raise serializers.ValidationError("Incorrect Password")
+        return value
+
+
+class ActivateUserSerializer(serializers.Serializer):  
+    email = serializers.EmailField()
+    password = serializers.CharField() 
+
+    def validate(self, attrs):
+        users = User.objects.filter(email=attrs['email'])
+        if not users:
+            raise serializers.ValidationError("User with this email does not exist.")
+        user = users.first()    
+        if not user.check_password(attrs['password']):
+            raise serializers.ValidationError("Incorrect password.")
+        
+        attrs['user'] = user
+        return attrs
+    
+    def create(self, validated_data):
+        user = User.objects.filter(email=validated_data['email']).first()
+        print(user.email)
+        Otp.objects.filter(user=user, is_used=False).update(is_used=True)
+        code = Otp.generate_otp()
+        hashed_code = make_password(code)
+        Otp.objects.create(
+            user=user,
+            code= hashed_code
+        )
+
+        threading.Thread(target=send_email, args=(user.email, code)).start()
+        return validated_data

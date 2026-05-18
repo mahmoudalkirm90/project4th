@@ -1,30 +1,35 @@
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from .models import User, Otp
 from .serializers import ( UserLoginSerializer,
                            ResendOtpSerializer,
                            VerifyOtpSerializer,
-                           DeleteAccountSerializer,
                            PasswordResetSerializer,
                            EmailResetSerializer,
                            UserInfoSerializer,
                            ForgetPasswordVerifyOtpSerializer,
                            ForgetPasswordSerializer,
-                           ResetPasswordSerializer
+                           ResetPasswordSerializer,
+                           DeactivateUserSerializer,
+                           ActivateUserSerializer
                            )
+from .mail_sender import send_email
+from .utils import *
+
 from doctors.serializers import DoctorProfileSerialzer
 from patients.serializers import PatientProfileSerializer
-from .mail_sender import send_email
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
+
 import threading
 
 
-from .utils import *
 class LoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     def post(self, request, *args, **kwargs):
@@ -97,16 +102,6 @@ class LogoutView(APIView):
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-class DeleteAccountView(APIView):
-
-    permission_classes = [IsAuthenticated] 
-    # allowed_methods = ['DELETE',"POST"]
-    def post(self, request):
-        serializer = DeleteAccountSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"message": "Account deleted successfully"}, status=status.HTTP_200_OK)
-
 class PasswordResetView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PasswordResetSerializer
@@ -168,7 +163,8 @@ class ForgetPasswordVerifyOtpView(generics.GenericAPIView):
         return Response(
             {"message": "OTP verified successfully"
              , "can_reset_password":True
-             , "is_verified":True},
+             , "is_verified":True
+             , "is_active":True},
             status=status.HTTP_200_OK
         )
 
@@ -185,4 +181,40 @@ class ResetPasswordView(generics.GenericAPIView):
         return Response(
             {"message": "Password reset successfully"},
             status=status.HTTP_200_OK
+        )
+
+class DeactivateAccountView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DeactivateUserSerializer
+    def delete(self, request):
+        # validation 
+        serializer = self.get_serializer(data=request.data) 
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.is_active = False
+        user.save()
+
+        # Band all tokens belong to user 
+        tokens = OutstandingToken.objects.filter(user=user)
+        for token in tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
+
+        return Response(
+            {"message": "Account deactivated successfully"},
+            status=status.HTTP_200_OK
+        )
+
+class ActivateUserView(generics.GenericAPIView): 
+    permission_classes = [AllowAny]
+    serializer_class = ActivateUserSerializer
+
+    def post(self, request): 
+        serializer = self.get_serializer(data=request.data) 
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                "message": "OTP sent to your email"
+            }
         )
