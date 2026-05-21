@@ -74,17 +74,17 @@ class VerifyOtpView(generics.GenericAPIView):
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = serializer.save()
-        if not result: 
+        user = serializer.save()
+        if not user: 
             return Response(
                 {"message": "invalid otp"},
                 400
             )
-        user = result
         refresh = RefreshToken.for_user(user)
 
         return Response(
-             {      "is_verified":True,
+             {      "is_verified":user.is_verified,
+                    "is_active": user.is_active,
                     "message": "OTP verified successfully",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token) 
@@ -136,15 +136,10 @@ class ForgotPasswordView(generics.GenericAPIView):
     serializer_class = ForgetPasswordSerializer
 
     def post(self, request):
-        user = self.request.user
-
-
-        code = Otp.generate_otp()
-        hashed_code = make_password(code)
-        Otp.objects.create(user=user, code=hashed_code)
-
-        threading.Thread(target=send_email, args=(user.email, code)).start()
-
+        serializer = self.get_serializer(data = self.request.data) 
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
         return Response(
             {"message": "OTP sent to your email"},
             status=status.HTTP_200_OK
@@ -164,7 +159,7 @@ class ForgetPasswordVerifyOtpView(generics.GenericAPIView):
             {"message": "OTP verified successfully"
              , "can_reset_password":True
              , "is_verified":True
-             , "is_active":True},
+             },
             status=status.HTTP_200_OK
         )
 

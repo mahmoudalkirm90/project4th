@@ -215,13 +215,24 @@ class EmailResetSerializer(serializers.ModelSerializer):
 class ForgetPasswordSerializer(serializers.Serializer):
     email = serializers.CharField()
     
-    def validate_email(self, value):
-        user = User.objects.filter(email=self.email).first()
+    def validate(self, attrs):
+        user = User.objects.filter(email=attrs['email']).first()
         if not user:
             raise serializers.ValidationError('invalid request')
         
-        return value
+        attrs['user'] = user
+        return attrs
     
+    def create(self, validated_data):
+        user = validated_data['user']
+
+        code = Otp.generate_otp()
+        hashed_code = make_password(code)
+        Otp.objects.create(user=user, code=hashed_code)
+
+        threading.Thread(target=send_email, args=(user.email, code)).start()
+
+        return validated_data   
 
 
 class ForgetPasswordVerifyOtpSerializer(serializers.Serializer):
