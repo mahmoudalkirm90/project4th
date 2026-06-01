@@ -76,7 +76,11 @@ class ArticleListAPIView(generics.ListAPIView):
         
         # منرجع كل المقالات لصاحبها
         return objs.filter(author=user.doctor).order_by('-likes','-score',)
-        
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.IsAuthenticated(), IsDoctor()]
+        return super().get_permissions()
+            
 class RecommendedArticlesAPIView(generics.ListAPIView):
     pagination_class   = ArticlePagination
     serializer_class   = ArticleSerializer

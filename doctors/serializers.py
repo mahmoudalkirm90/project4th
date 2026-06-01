@@ -56,7 +56,7 @@ class DoctorProfileSerialzer(serializers.ModelSerializer):
     session_prices = PricesSerializer(required=False, many=True)
     class Meta: 
         model = Doctor 
-        fields = ['user','job_title','specialties','experience', "bio", 'session_prices']
+        fields = ['user','job_title','status','specialties','experience', "bio", 'session_prices']
     
 
     def update(self,instance,validated_data): 
