@@ -14,7 +14,7 @@ class AuthorSerializer(serializers.ModelSerializer):
     job_title = job_titleSerialzer()
     class Meta: 
         model = Doctor
-        fields = ['user','job_title']
+        fields = ['user','job_title','photo'] 
 class ArticaleCraeteSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Article

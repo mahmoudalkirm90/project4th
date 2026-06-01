@@ -41,7 +41,7 @@ class PatientScoresView(APIView):
 # doctors/views.py
 
 class RecommendDoctorsView(APIView):
-    permission_classes = [IsAuthenticated, IsDoctor]
+    permission_classes = [IsAuthenticated, IsPatient]
     def get(self, request):
         patient     = request.user.patient
         recommended = recommend_doctors(patient)

@@ -65,8 +65,9 @@ def recommend_doctors(patient, top_n: int = 5) -> list:
                     "username":       doctor.user.username,
                     "name":           doctor.user.get_full_name(),
                     "job_title":      doctor.job_title.title if doctor.job_title else None,
+                    'photo':          doctor.photo.url if doctor.photo else None,
                     "experience":     doctor.experience,
-                    "primary_domain": info["name"],
+                    "primary_domain": info["name"], 
                     "primary_score":  info["score"],
                     "specialties":    [s.name for s in doctor.specialties.all()],
                 }

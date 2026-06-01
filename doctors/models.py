@@ -36,7 +36,7 @@ class Doctor(models.Model):
     ]
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') # to track the approval status of the doctor
-    
+    photo = models.ImageField(upload_to='media/doctor_photos/%Y/%m/%d/', blank=True , null=True) # to allow doctors to upload their photos
     specialties = models.ManyToManyField(SubSpecialization)
     def __str__(self):
         return self.user.username
