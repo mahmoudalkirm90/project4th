@@ -44,6 +44,9 @@ class ArticleRetrieveSerializer(serializers.ModelSerializer):
     likes = serializers.IntegerField(read_only=True)
     dislikes = serializers.IntegerField(read_only=True)
     score = serializers.IntegerField(read_only=True)
+
+    reaction = serializers.CharField(source='annotated_reaction', read_only=True, default=None)
+
     class Meta: 
         model = Article
         fields = "__all__"
@@ -54,6 +57,9 @@ class ArticlesMostReactionScoreSerializer(serializers.ModelSerializer):
     score = serializers.IntegerField(read_only=True)
     author = AuthorSerializer()
     specialization = SpecializationSerializer(read_only=True)
+
+    reaction = serializers.CharField(source='annotated_reaction', read_only=True, default=None)
+
 
     class Meta: 
         model = Article
@@ -70,12 +76,19 @@ class DeleteArticleSerializer(serializers.ModelSerializer):
         fields = []
 
 class ArticleSerializer(serializers.ModelSerializer): 
-    likes = serializers.IntegerField(read_only=True)
-    dislikes = serializers.IntegerField(read_only=True)
-    score = serializers.IntegerField(read_only=True)
-    author = AuthorSerializer()
+    likes = serializers.IntegerField(read_only=True, default=0)
+    dislikes = serializers.IntegerField(read_only=True, default=0)
+    score = serializers.IntegerField(read_only=True, default=0)
+    
+    # يقرأ الحقل من الـ annotate الذي أضفناه في الـ View
+    reaction = serializers.CharField(source='annotated_reaction', read_only=True, default=None)
+    
+    author = AuthorSerializer(read_only=True)
     specialization = SpecializationSerializer(read_only=True)
 
     class Meta:     
         model = Article
-        fields = "__all__"
+        fields = [
+            'id', 'title', 'content', 'status', 'author', 'specialization', 
+            'likes', 'dislikes', 'score', 'reaction', 'created_at'
+        ]

@@ -59,15 +59,5 @@ def recommend_articles(patient, top_n: int = 5) -> list:
             if article.id not in seen: 
                 seen[article.id] = {
                     "id":             article.id,
-                    "author":         article.author.user.username,
-                    "title":          article.title,
-                    "content":        article.content,
-                    "created_at":     article.created_at,
-                    "specialization": article.specialization.name,
-                    "primary_score":  info["score"],
-                    "likes":          article.likes,
-                    "dislikes":       article.dislikes,
-                    "score":          article.score
-
                 }
         return seen

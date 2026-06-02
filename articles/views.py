@@ -4,9 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 
-from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
-from django.db.models import Case, When, IntegerField
+from django.db.models import Case, When, IntegerField,Count, Q, OuterRef, Subquery
 
 from users.permissions import IsDoctor, IsPatient
 
@@ -46,11 +45,19 @@ class ArticleRetrieveAPIView(generics.RetrieveAPIView):
     lookup_field = 'pk'
 
     def get_queryset(self):
+        user = self.request.user
+        user_reaction = Subquery(
+            Reaction.objects.filter(
+                user=user, 
+                article_id=OuterRef('pk')
+            ).values('reaction')[:1]
+        )
         return Article.objects.annotate(
                 likes = Count('reactions', filter=Q(reactions__reaction='like')),
                 dislikes = Count('reactions', filter=Q(reactions__reaction='dislike')),
                 score = Count('reactions', filter=Q(reactions__reaction='like')) - 
                         Count('reactions', filter=Q(reactions__reaction='dislike'))
+                        ,annotated_reaction = user_reaction,
                 ).filter(status="Approved").order_by('-likes','-score',)
 class ArticleListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -61,12 +68,19 @@ class ArticleListAPIView(generics.ListAPIView):
     def get_queryset(self):
         username = self.request.query_params.get('author_username', None)
         user = self.request.user
-        
+        user_reaction = Subquery(
+            Reaction.objects.filter(
+                user=user, 
+                article_id=OuterRef('pk')
+            ).values('reaction')[:1]
+        )
         objs = Article.objects.annotate(
             likes = Count('reactions', filter=Q(reactions__reaction='like')),
             dislikes = Count('reactions', filter=Q(reactions__reaction='dislike')),
             score = Count('reactions', filter=Q(reactions__reaction='like')) - 
                     Count('reactions', filter=Q(reactions__reaction='dislike'))
+                        ,annotated_reaction = user_reaction,
+                    
             )
         
         # اذا كان موجود البارامتر بالرابط منرجع فقط المقالات المقبولة
@@ -87,18 +101,28 @@ class RecommendedArticlesAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatient]
 
     def get_queryset(self):
-        patient     = self.request.user.patient
+        user        = self.request.user
+        patient     = user.patient
         recommended = recommend_articles(patient=patient)
-
+        
+        # نأخذ الـ IDs فقط من نظام الترشيح
         recommended_ids = list(recommended.keys())
 
-        # حافظ على ترتيب الـ recommended بـ CASE WHEN
+        # الحفاظ على ترتيب نظام الترشيح
         order = Case(
             *[
                 When(id=article_id, then=pos)
                 for pos, article_id in enumerate(recommended_ids)
             ],
             output_field=IntegerField()
+        )
+
+        # استعلام فرعي ذكي يجلب تفاعل المستخدم الحالي من قاعدة البيانات مباشرة
+        user_reaction = Subquery(
+            Reaction.objects.filter(
+                user=user, 
+                article_id=OuterRef('pk')
+            ).values('reaction')[:1]
         )
 
         return (
@@ -111,9 +135,10 @@ class RecommendedArticlesAPIView(generics.ListAPIView):
                     Count('reactions', filter=Q(reactions__reaction='like')) -
                     Count('reactions', filter=Q(reactions__reaction='dislike'))
                 ),
+                annotated_reaction = user_reaction, # هنا يتم حقن الـ reaction داخل الـ QuerySet
                 relevance_order = order,
             )
-            .order_by('relevance_order', '-score')  # ترتيب الـ recommendation أولاً، score كـ tiebreaker
+            .order_by('relevance_order', '-score')
         )
 
 class ArticlesMostReactionScoreListAPIView(generics.ListAPIView):
@@ -122,12 +147,23 @@ class ArticlesMostReactionScoreListAPIView(generics.ListAPIView):
     pagination_class = PageNumberPagination
     pagination_class.page_size = 5
     def get_queryset(self):
-        return Article.objects.annotate(
+        user = self.request.user
+        user_reaction = Subquery(
+            Reaction.objects.filter(
+                user=user, 
+                article_id=OuterRef('pk')
+            ).values('reaction')[:1]
+        )
+
+        return (Article.objects.annotate(
                 likes = Count('reactions', filter=Q(reactions__reaction='like')),
                 dislikes = Count('reactions', filter=Q(reactions__reaction='dislike')),
                 score = Count('reactions', filter=Q(reactions__reaction='like')) - 
                         Count('reactions', filter=Q(reactions__reaction='dislike'))
+                ,annotated_reaction = user_reaction,
                 ).filter(status="Approved").order_by('-likes','-score',)
+
+        )
 
 class ReactionGenericAPIView(generics.GenericAPIView):
     serializer_class = ReactionSerializer
