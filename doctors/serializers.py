@@ -44,19 +44,29 @@ class UserUpdateSerialzer(serializers.ModelSerializer):
     class Meta: 
         model = User
         fields = ["email" , "username" , 'gender','birth_date','phone','first_name',"last_name","age"]
+        extra_kwargs = {'password': {'write_only': True}, "email": {"read_only": True}, "username": {"read_only": True}}
+
 class SubSpecializationSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubSpecialization
         fields = ["name"]
-        
+
+class EducationsSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Education
+        fields = ['degree','license_number','institution','graduation_year','status','created_at']
+    
 class DoctorProfileSerialzer(serializers.ModelSerializer):
     user = UserUpdateSerialzer(required=False)
     job_title = job_titleSerialzer(required=False)
     specialties = SubSpecializationSerializer(required=False,many=True)
     session_prices = PricesSerializer(required=False, many=True)
+
+    # educations for representaion only
+    educations = EducationsSerializer(many=True,required=False)
     class Meta: 
         model = Doctor 
-        fields = ['user','photo','job_title','status','specialties','experience', "bio", 'session_prices']
+        fields = ['user','educations','photo','job_title','status','specialties','experience', "bio", 'session_prices']
     
 
     def update(self,instance,validated_data): 
