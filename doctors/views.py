@@ -1,14 +1,19 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+
 from rest_framework import generics
 from .models import Doctor, Education, Schedule
 from .serializers import (DoctorRegisterSerializer,
                           DoctorProfileSerialzer, 
                           DoctorEducationSerializer,
-                          ScheduleSerializer)
+                          ScheduleSerializer,
+                          DoctorPublicProfileSerializer,
+                          AvailableSlotsSerializer,)
 from rest_framework.response import Response 
 from users.permissions import IsDoctor , IsVerified 
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import NotFound
+from rest_framework.views import APIView
+from rest_framework import status
 
 class DoctorRegisterView(generics.CreateAPIView):
     queryset = Doctor.objects.all()
@@ -74,14 +79,10 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
         return Schedule.objects.filter(day_of_week=day_of_week,doctor=doctor)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from .models import Doctor
-from .serializers import AvailableSlotsSerializer
 
 class AvailableSlotsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, doctor_username):
         doctor = get_object_or_404(Doctor, user__username=doctor_username)
         
@@ -93,8 +94,18 @@ class AvailableSlotsView(APIView):
                 'date': serializer.validated_data['date']
             }
             
-            # إعادة تشغيل السيريالايزر بالبيانات الجاهزة لإنتاج الـ JSON
             final_serializer = AvailableSlotsSerializer(data_context)
             return Response(final_serializer.data, status=status.HTTP_200_OK)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class DoctorPublicProfileView(generics.RetrieveAPIView): 
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorPublicProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'doctor_username'
+
+    def get_object(self):
+        username_val = self.kwargs.get(self.lookup_field)
+        doctor = get_object_or_404(Doctor, user__username=username_val)
+        return doctor

@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (DoctorRegisterView,
                     DoctorProfileView,
                     DoctorEducationView,
-                    AvailableSlotsView
+                    AvailableSlotsView,
+                    DoctorPublicProfileView
                     )
 from rest_framework.routers import DefaultRouter
 
@@ -12,5 +13,5 @@ urlpatterns = [
     path('education/add', DoctorEducationView.as_view(), name="Doctor-education-add"),
 
     path('<str:doctor_username>/available-slots/', AvailableSlotsView.as_view(), name='doctor-available-slots'),
- 
+    path('<str:doctor_username>/profile/public', DoctorPublicProfileView.as_view(), name='doctor-profile-public'),
 ]

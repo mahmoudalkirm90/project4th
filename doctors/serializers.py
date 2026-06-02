@@ -193,19 +193,19 @@ class AvailableSlotsSerializer(serializers.Serializer):
     def get_available_slots(self, obj):
         # obj هنا سيمثل البيانات التي سنمررها للـ Serializer (الطبيب والتاريخ)
         doctor = obj['doctor']
-        target_date = obj['date']
+        target_date = obj['date'] 
         
-        # 1. معرفة اسم اليوم بالإنجليزية
+        # معرفة اسم اليوم بالإنجليزية
         day_name = target_date.strftime('%A')
 
-        # 2. جلب جدول عمل الطبيب
+        # جلب جدول عمل الطبيب
         schedules = Schedule.objects.filter(doctor=doctor, day_of_week__iexact=day_name)
         print(f"قائمة جداول العمل المكتشفة: {schedules}")
 
         if not schedules.exists():
             return []
 
-        # 3. جلب المواعيد المحجوزة مسبقاً
+        # جلب المواعيد المحجوزة مسبقاً
         existing_appointments = Appointment.objects.filter(
             doctor=doctor,
             date__date=target_date,
@@ -218,7 +218,7 @@ class AvailableSlotsSerializer(serializers.Serializer):
             app_end = (app.date + timedelta(minutes=app.duration)).time()
             booked_slots.append((app_start, app_end))
 
-        # 4. تقسيم الوقت وتوليد الفترات المتاحة (مثلاً كل 30 دقيقة)
+        # تقسيم الوقت وتوليد الفترات المتاحة (مثلاً كل 30 دقيقة)
         slot_duration = timedelta(minutes=30)
         slots_list = []
 
@@ -245,3 +245,16 @@ class AvailableSlotsSerializer(serializers.Serializer):
                 current_time += slot_duration
 
         return slots_list
+class UserDoctorPublicProfileSerializer(serializers.ModelSerializer): 
+    class Meta: 
+        model = User
+        fields = ['username','first_name','last_name','age']
+class DoctorPublicProfileSerializer(serializers.ModelSerializer):
+    user = UserDoctorPublicProfileSerializer()
+    job_title = job_titleSerialzer()
+    specialties = SubSpecializationSerializer(many=True)
+    session_prices = PricesSerializer( many=True)
+    class Meta:
+        model = Doctor
+        fields = ['user','job_title','specialties','session_prices', 'bio', 'experience', 'photo',]
+        
