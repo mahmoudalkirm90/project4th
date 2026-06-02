@@ -73,4 +73,28 @@ class ScheduleViewSet(viewsets.ModelViewSet):
             return Schedule.objects.filter(doctor=doctor)
 
         return Schedule.objects.filter(day_of_week=day_of_week,doctor=doctor)
-    
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Doctor
+from .serializers import AvailableSlotsSerializer
+
+class AvailableSlotsView(APIView):
+    def get(self, request, doctor_username):
+        doctor = get_object_or_404(Doctor, user__username=doctor_username)
+        
+        serializer = AvailableSlotsSerializer(data=request.query_params)
+        
+        if serializer.is_valid():
+            data_context = {
+                'doctor': doctor,
+                'date': serializer.validated_data['date']
+            }
+            
+            # إعادة تشغيل السيريالايزر بالبيانات الجاهزة لإنتاج الـ JSON
+            final_serializer = AvailableSlotsSerializer(data_context)
+            return Response(final_serializer.data, status=status.HTTP_200_OK)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

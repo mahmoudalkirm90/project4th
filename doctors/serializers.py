@@ -176,3 +176,72 @@ class ScheduleSerializer(serializers.ModelSerializer):
         schedule.save()
 
         return validated_data
+    
+
+
+from rest_framework import serializers
+from datetime import datetime, timedelta
+from django.shortcuts import get_object_or_404
+from .models import Doctor, Schedule
+from appointments.models import Appointment
+class AvailableSlotsSerializer(serializers.Serializer):
+    date = serializers.DateField(format="%Y-%m-%d", input_formats=["%Y-%m-%d"])
+    
+    # حقل مخصص لإرجاع الأوقات المتاحة بعد الحساب
+    available_slots = serializers.SerializerMethodField()
+
+    def get_available_slots(self, obj):
+        # obj هنا سيمثل البيانات التي سنمررها للـ Serializer (الطبيب والتاريخ)
+        doctor = obj['doctor']
+        target_date = obj['date']
+        
+        # 1. معرفة اسم اليوم بالإنجليزية
+        day_name = target_date.strftime('%A')
+
+        # 2. جلب جدول عمل الطبيب
+        schedules = Schedule.objects.filter(doctor=doctor, day_of_week__iexact=day_name)
+        print(f"قائمة جداول العمل المكتشفة: {schedules}")
+
+        if not schedules.exists():
+            return []
+
+        # 3. جلب المواعيد المحجوزة مسبقاً
+        existing_appointments = Appointment.objects.filter(
+            doctor=doctor,
+            date__date=target_date,
+            status__in=['pending', 'confirmed']
+        ).order_by('date')
+        print(f"عدد المواعيد المحجوزة المحملة: {existing_appointments.count()}")
+        booked_slots = []
+        for app in existing_appointments:
+            app_start = app.date.time()
+            app_end = (app.date + timedelta(minutes=app.duration)).time()
+            booked_slots.append((app_start, app_end))
+
+        # 4. تقسيم الوقت وتوليد الفترات المتاحة (مثلاً كل 30 دقيقة)
+        slot_duration = timedelta(minutes=30)
+        slots_list = []
+
+        for schedule in schedules:
+            current_time = datetime.combine(target_date, schedule.start_time)
+            end_datetime = datetime.combine(target_date, schedule.end_time)
+
+            while current_time + slot_duration <= end_datetime:
+                slot_start = current_time.time()
+                slot_end = (current_time + slot_duration).time()
+
+                is_booked = False
+                for b_start, b_end in booked_slots:
+                    if (b_start <= slot_start < b_end) or (b_start < slot_end <= b_end) or (slot_start <= b_start and slot_end >= b_end):
+                        is_booked = True
+                        break
+
+                if not is_booked:
+                    slots_list.append({
+                        "start": slot_start.strftime('%H:%M'),
+                        "end": slot_end.strftime('%H:%M')
+                    })
+
+                current_time += slot_duration
+
+        return slots_list
