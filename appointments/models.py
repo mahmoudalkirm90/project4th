@@ -16,7 +16,7 @@ class Appointment(models.Model):
         Audio = 'audio' , 'Audio'
         TextMessage = 'text_message' , 'Text Message'
 
-    appointment_type = models.CharField(max_length=100 , choices=Type.choices , default=Type.TextMessage)
+    type = models.CharField(max_length=100 , choices=Type.choices , default=Type.TextMessage)
     patient = models.ForeignKey(Patient , on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE)
     date = models.DateTimeField()
