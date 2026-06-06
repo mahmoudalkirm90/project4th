@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from .models import Rating, Appointment
+from .models import Rating
 from django.utils import timezone
 class RatingSerializer(serializers.ModelSerializer):
     class Meta:

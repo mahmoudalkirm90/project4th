@@ -66,7 +66,7 @@ class DoctorProfileSerialzer(serializers.ModelSerializer):
     educations = EducationsSerializer(many=True,required=False)
     class Meta: 
         model = Doctor 
-        fields = ['user','educations','photo','job_title','status','specialties','experience', "bio", 'session_prices']
+        fields = ['user', 'average_rating','patients_count','educations','photo','job_title','status','specialties','experience', "bio", 'session_prices']
     
 
     def update(self,instance,validated_data): 
@@ -256,5 +256,5 @@ class DoctorPublicProfileSerializer(serializers.ModelSerializer):
     session_prices = PricesSerializer( many=True)
     class Meta:
         model = Doctor
-        fields = ['user','job_title','specialties','session_prices', 'bio', 'experience', 'photo',]
+        fields = ['user','average_rating','patients_count','job_title','specialties','session_prices', 'bio', 'experience', 'photo',]
         

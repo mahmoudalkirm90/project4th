@@ -28,7 +28,7 @@ class DoctorProfileView(generics.RetrieveUpdateAPIView):
 
     queryset = Doctor.objects.all()
     serializer_class = DoctorProfileSerialzer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsDoctor]
 
     def get_object(self):
         return self.request.user.doctor

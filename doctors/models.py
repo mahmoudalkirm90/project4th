@@ -48,7 +48,23 @@ class Doctor(models.Model):
         for spec in specs: 
             objs.append(spec.name)
         return objs
-
+    
+    @property
+    def average_rating(self):
+        from ratings.models import Rating
+        ratings = Rating.objects.filter(appointment__doctor=self)
+        
+        average = ratings.aggregate(models.Avg('rating'))['rating__avg']
+        
+        return round(average, 1) if average is not None else 0.0
+    
+    @property
+    def patients_count(self):
+        from appointments.models import Appointment
+        
+        count = Appointment.objects.filter(doctor=self).exclude(status='cancelled').values('patient').distinct().count()
+        
+        return count
 class Education(models.Model):
     doctor = models.ForeignKey(Doctor , on_delete=models.CASCADE , related_name='educations')
     degree = models.CharField(max_length=100)
