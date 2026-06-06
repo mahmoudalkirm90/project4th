@@ -3,8 +3,7 @@ from django.utils import timezone
 from users.models import User
 from patients.models import Patient
 from doctors.models import Doctor
-
-
+from datetime import datetime
 class Appointment(models.Model):
     class Status (models.TextChoices):
         Pending = 'pending' , 'Pending' 
@@ -24,6 +23,14 @@ class Appointment(models.Model):
     status = models.CharField(max_length=100 , choices= Status.choices , default=Status.Pending)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Appointment between {self.patient} and {self.doctor} on {self.date} and id = {self.pk}"
+    
+    @property
+    def end_time(self):
+        return self.date + timezone.timedelta(minutes=self.duration)
+
 
 class SessionPrice(models.Model):
     doctor = models.ForeignKey(

@@ -1,12 +1,10 @@
 from django.db import models
 from patients.models import Patient
 from doctors.models import Doctor
-
+from appointments.models import Appointment
 class Rating(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, default=None, null=True)
     rating = models.PositiveIntegerField()
-    comment = models.TextField(blank=True)
+    comment = models.CharField(max_length=255, blank=True, default='')
 
-    def __str__(self):
-        return f"Rating by {self.patient} for {self.doctor}: {self.rating}"
+    created_at = models.DateTimeField(auto_now_add=True)
