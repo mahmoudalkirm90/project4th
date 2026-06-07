@@ -36,7 +36,7 @@ class BookAppointmentView(APIView):
         if serializer.is_valid():
             serializer.save() # 
             return Response({
-                "message": "تم تقديم طلب الحجز بنجاح",
+                "message":"“Your reservation request has been submitted successfully",
                 "data": serializer.data
             }, status=status.HTTP_201_CREATED)
             
@@ -71,7 +71,7 @@ class ConfirmAppointmentView(APIView):
         appointment.status = Appointment.Status.Confirmed
         appointment.save()
         
-        return Response({"message": "تم تأكيد الموعد بنجاح."}, status=status.HTTP_200_OK)
+        return Response({"message": "The appointment has been confirmed successfully."}, status=status.HTTP_200_OK)
 
 class CancelAppointmentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -85,12 +85,12 @@ class CancelAppointmentView(APIView):
         
         # السماح للطبيب أو المريض بإلغاء الموعد
         if appointment.doctor.user != request.user and appointment.patient.user != request.user:
-            return Response({"error": "ليس لديك صلاحية لإلغاء هذا الموعد."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You do not have the authority to cancel this appointment"}, status=status.HTTP_403_FORBIDDEN)
         
         appointment.status = Appointment.Status.Cancelled
         appointment.save()
         
-        return Response({"message": "تم إلغاء الموعد بنجاح."}, status=status.HTTP_200_OK)
+        return Response({"message": "The appointment has been successfully cancelled."}, status=status.HTTP_200_OK)
 
 class RetrieveAppointmentAPIView(RetrieveAPIView): 
     permission_classes = [IsAuthenticated, IsDoctor]

@@ -54,7 +54,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         try:
             doctor = Doctor.objects.get(user__username=doctor_username)
         except Doctor.DoesNotExist:
-            raise serializers.ValidationError({"doctor_username": "الطبيب المحدد غير موجود."})
+            raise serializers.ValidationError({"doctor_username": "Doctor not exists"})
         
         
         naive_start_datetime = datetime.combine(day_date, start_time)
@@ -64,7 +64,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         end_datetime = timezone.make_aware(naive_end_datetime)
 
         if start_datetime < timezone.now():
-            raise serializers.ValidationError({"date": "لا يمكن حجز موعد في وقت سابق من الآن."})
+            raise serializers.ValidationError({"date": "It is not possible to book an appointment earlier than now."})
 
 
         day_name = day_date.strftime('%A') # الحصول على اسم اليوم بالإنجليزية
@@ -80,7 +80,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         if not is_within_schedule:
             raise serializers.ValidationError(
-                {"date": f"هذا الوقت خارج ساعات عمل الطبيب الرسمية ليوم ({day_name})."}
+                {"date": f"This time is outside the doctor's official working hours for the day ({day_name})."}
             )
 
         overlapping_appointments = Appointment.objects.filter(
@@ -93,7 +93,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
             if start_datetime < app_end and end_datetime > app_start:
                 raise serializers.ValidationError(
-                    {"date": "هذا الموعد متداخل مع حجز آخر قائم للطبيب."}
+                    {"date": "This appointment overlaps with another existing doctor's appointment."}
                 )
 
         attrs['doctor'] = doctor
