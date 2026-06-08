@@ -13,7 +13,7 @@ class PricesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SessionPrice
         fields = ['duration','type','price']
-    def validate_prive(self, value):
+    def validate_price(self, value):
         if value < 0:
             raise ValidationError('invalid price')
     def create(self, validated_data):
@@ -66,9 +66,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if start_datetime < timezone.now():
             raise serializers.ValidationError({"date": "It is not possible to book an appointment earlier than now."})
 
-
+        if start_time > end_time: 
+            raise serializers.ValidationError({"detail":'end time should be greater than start time'})
         day_name = day_date.strftime('%A') # الحصول على اسم اليوم بالإنجليزية
 
+        if (end_datetime - start_datetime) < timedelta(minutes=30): 
+            raise serializers.ValidationError({"detail": "duration at lease 30 minutes"})
 
         # 3. التحقق من أوقات دوام الطبيب (Schedule)
         is_within_schedule = Schedule.objects.filter(
@@ -87,6 +90,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
             doctor=doctor,
             status__in=['pending', 'confirmed'] # فحص الحجوزات النشطة فقط
         )
+        if self.instance:
+            overlapping_appointments = overlapping_appointments.exclude(pk=self.instance.pk)
         for app in overlapping_appointments:
             app_start = app.date
             app_end = app.date + timedelta(minutes=app.duration)
@@ -137,3 +142,69 @@ class RetrieveAppointmentSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Appointment
         fields = ['id','patient','patient_username','doctor_username', 'date', 'duration', 'type', 'status']  
+
+
+class RescheduleAppointmentSerializer(AppointmentSerializer):
+    
+    class Meta(AppointmentSerializer.Meta):
+        fields = ['doctor_username','day_date', 'slot']
+    def validate(self, attrs):
+        print("validate called", attrs)
+        return super().validate(attrs)
+    def update(self, instance, validated_data):
+        instance.date = validated_data.get('date', instance.date)
+        instance.duration = validated_data.get('duration', instance.duration)
+        instance.save()
+        return instance
+    
+
+class PaymentSerializer(serializers.ModelSerializer):
+    appointment_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Payment
+        fields = ['id', 'appointment_id', 'amount', 'method', 'transaction_id', 'status', 'date']
+        read_only_fields = ['status', 'amount', 'date']
+
+
+    def validate_transaction_id(self, value):
+        method = self.initial_data.get('method')
+        if Payment.objects.filter(transaction_id=value, method=method).exists():
+            raise serializers.ValidationError("This transaction ID already exists for this payment method.")
+        return value
+    def validate_appointment_id(self, value):
+        request = self.context.get('request')
+        try:
+            appointment = Appointment.objects.get(
+                pk=value,
+                patient=request.user.patient
+            )
+        except Appointment.DoesNotExist:
+            raise serializers.ValidationError("Appointment not found.")
+
+        if appointment.status != 'pending':
+            raise serializers.ValidationError("This appointment is not pending payment.")
+
+        # تحقق ما في دفع موجود مسبقاً
+        if hasattr(appointment, 'payment'):
+            raise serializers.ValidationError("Payment already exists for this appointment.")
+
+        return value
+
+    def create(self, validated_data):
+        appointment_id = validated_data.pop('appointment_id')
+        appointment = Appointment.objects.get(pk=appointment_id)
+
+        # احسب المبلغ تلقائياً من مدة الحجز وسعر الطبيب
+        
+        session_price = SessionPrice.objects.filter(
+            doctor = appointment.doctor,
+            type =appointment.type, 
+        ).first().price
+        amount = (session_price)
+        payment = Payment.objects.create(
+            appointment=appointment,
+            amount=amount,
+            **validated_data
+        )
+        return payment
