@@ -29,10 +29,6 @@ class SessionPricesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return SessionPrice.objects.filter(doctor=self.request.user.doctor)
 
- 
-    def perform_create(self, serializer):
-        serializer.save(doctor=self.request.user.doctor)
-
 
 class BookAppointmentView(APIView):
     permission_classes = [IsAuthenticated]

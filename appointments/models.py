@@ -44,9 +44,17 @@ class SessionPrice(models.Model):
         Video = 'video' , 'Video'
         Audio = 'audio' , 'Audio'
         TextMessage = 'text_message' , 'Text Message'
-    duration = models.IntegerField() # in minutes
+    duration = models.IntegerField(default=30) # in minutes
     type = models.CharField(max_length=100 , choices= Type.choices)
     price = models.DecimalField(max_digits=10 , decimal_places=2)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['doctor', 'type'],
+                name='unique_doctor_session_type'
+            )
+        ]
 # create the perscription then add the medications to it in the same request 
 class Prescription(models.Model):
     patient = models.ForeignKey(Patient , on_delete=models.CASCADE)
