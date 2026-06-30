@@ -157,7 +157,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',  # 100 طلب في اليوم لكل مستخدم مجهول
         'user': '1000/day', # 1000 طلب في اليوم لكل مستخدم مسجل
-        'otp_limit': '5/day',  # حددنا القيد هنا: 5 طلبات في اليوم
+        'otp_limit': '5/day',  #  5 طلبات في اليوم
     }
 }
 SPECTACULAR_SETTINGS = {

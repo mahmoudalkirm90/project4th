@@ -13,22 +13,41 @@ class PricesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SessionPrice
         fields = ['duration','type','price']
+        read_only_fields = ['duration']
+
     def validate_price(self, value):
         if value < 0:
             raise ValidationError('invalid price')
+        return value
+
     def create(self, validated_data):
-        duration = validated_data.get('duration')
-        type = validated_data.get('type')
-        price = validated_data.get('price')
+        session_type = validated_data.get('type')
 
         doctor = self.context['request'].user.doctor
 
-        if SessionPrice.objects.filter(type=type).exists():
-            raise ValidationError(f'Session type {type} already exists')
+        if SessionPrice.objects.filter(doctor=doctor, type=session_type).exists():
+            raise ValidationError(f'Session type {session_type} already exists')
         
-        obj = SessionPrice.objects.create(doctor=doctor, duration=duration,type=type,price=price )
-        obj.save()
-        return validated_data
+        return SessionPrice.objects.create(
+            doctor=doctor,
+            duration=30,
+            **validated_data
+        )
+
+    def update(self, instance, validated_data):
+        session_type = validated_data.get('type', instance.type)
+
+        if SessionPrice.objects.filter(
+            doctor=instance.doctor,
+            type=session_type,
+        ).exclude(pk=instance.pk).exists():
+            raise ValidationError(f'Session type {session_type} already exists')
+
+        instance.type = session_type
+        instance.price = validated_data.get('price', instance.price)
+        instance.duration = 30
+        instance.save()
+        return instance
 
 class SlotSerializer(serializers.Serializer):
     start = serializers.TimeField()
