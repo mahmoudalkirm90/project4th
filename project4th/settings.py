@@ -155,9 +155,10 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'  # للمستخدمين المسجلين
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',  # 100 طلب في اليوم لكل مستخدم مجهول
+        'anon': '1/day',  # 100 طلب في اليوم لكل مستخدم مجهول
         'user': '1000/day', # 1000 طلب في اليوم لكل مستخدم مسجل
-        'otp_limit': '5/day',  #  5 طلبات في اليوم
+        'otp_limit': '1/day',  #  5 طلبات في اليوم
+        'login_limit': '5/day',
     }
 }
 SPECTACULAR_SETTINGS = {

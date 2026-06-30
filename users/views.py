@@ -32,8 +32,7 @@ import threading
 
 class LoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
-    throttle_scope = 'otp_limit'
-    
+    throttle_scope = 'login_limit'
     def post(self, request, *args, **kwargs):
         
         serializer = self.get_serializer(data=request.data)
@@ -61,6 +60,7 @@ class LoginView(generics.GenericAPIView):
 
 class ResendOtpView(generics.GenericAPIView):
     serializer_class = ResendOtpSerializer
+    throttle_scope = 'otp_limit'
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
