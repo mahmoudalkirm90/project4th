@@ -150,6 +150,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle', # للمستخدمين غير المسجلين
+        'rest_framework.throttling.UserRateThrottle'  # للمستخدمين المسجلين
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',  # 100 طلب في اليوم لكل مستخدم مجهول
+        'user': '1000/day', # 1000 طلب في اليوم لكل مستخدم مسجل
+        'otp_limit': '5/day',  # حددنا القيد هنا: 5 طلبات في اليوم
+    }
 }
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Afiete Project API',
